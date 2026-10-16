@@ -45,4 +45,11 @@ class Tests(unittest.TestCase):
         self.assertNotIn('{override}', result)
         self.assertIn('0:00:25.00', result)
 
+    def test_community_caption_style_is_distinct(self):
+        explainer = a.captions('One two three four five six', 20)
+        community = a.captions('One two three four five six', 20, 'community')
+        self.assertIn('GTA CRAZE  /  QUICK BREAKDOWN', explainer)
+        self.assertIn('GTA COMMUNITY', community)
+        self.assertNotEqual(explainer, community)
+
 if __name__ == '__main__': unittest.main()
