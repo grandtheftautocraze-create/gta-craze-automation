@@ -3,6 +3,8 @@
   "privacy": "public",
   "text_model": "gpt-4.1-mini",
   "voice_model": "gpt-4o-mini-tts",
-  "voice": "onyx",
+  "voice": "coral",
+  "voice_instructions": "Energetic, warm gaming storyteller. Conversational English, medium-fast pace, crisp articulation, lively pitch changes, and a short beat before the payoff. Sound confident and natural, never robotic or shouty.",
   "monthly_attempt_cap": 62
 }
+
