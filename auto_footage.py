@@ -125,7 +125,7 @@ def sync(root):
             target = folder / f'clip-{position:04d}.mp4'
             if not target.exists():
                 pending = folder / f'clip-{position:04d}.pending.mp4'
-                subprocess.run(['ffmpeg', '-y', '-v', 'error', '-ss', str(position), '-i', str(original), '-t', '60',
+                subprocess.run(['ffmpeg', '-nostdin', '-y', '-v', 'error', '-ss', str(position), '-i', str(original), '-t', '60',
                     '-map', '0:v:0', '-an', '-c:v', 'libx264', '-preset', 'fast', '-crf', '23', '-pix_fmt', 'yuv420p',
                     '-movflags', '+faststart', str(pending)], check=True, timeout=600)
                 if duration(pending) < 59:
