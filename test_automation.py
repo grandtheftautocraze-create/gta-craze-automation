@@ -5,6 +5,17 @@ from tempfile import TemporaryDirectory
 from unittest.mock import patch
 import automation as a
 
+def script_payload():
+    return dict(
+        title='GTA 5 police chases have a hidden detail',
+        narration='A useful fact about GTA gameplay. ' * 13,
+        primary_keyword='GTA 5 police chases',
+        description=('GTA 5 police chases change as your wanted level rises. This Short explains the detail and why it matters. What would you try?'),
+        tags=['GTA 5 police chases', 'Grand Theft Auto V', 'GTA 5 wanted level', 'GTA gameplay'],
+        hashtags=['#GTA5', '#GTAShorts', '#Shorts'],
+        ready=True,
+    )
+
 class Tests(unittest.TestCase):
     def test_budget_counts_failed_attempts(self):
         with TemporaryDirectory() as t, patch.object(a, 'DATA', Path(t)):
@@ -33,12 +44,23 @@ class Tests(unittest.TestCase):
             with self.assertRaises(ValueError): a.media_entries()
 
     def test_fiction_and_insufficient_research(self):
-        script = dict(title='Example', narration='word ' * 70, ready=True)
+        script = script_payload()
         with self.assertRaises(ValueError): a.validate_script(script, 'story')
         script['narration'] = 'Fictional story. ' + script['narration']
         a.validate_script(script, 'story')
         script['ready'] = False
         with self.assertRaises(ValueError): a.validate_script(script, 'news')
+
+    def test_seo_metadata_requires_relevant_keyword_and_bounded_tags(self):
+        script = script_payload()
+        self.assertEqual(a.validate_script(script, 'details')['primary_keyword'], 'GTA 5 police chases')
+        script['title'] = 'A hidden detail in this game'
+        with self.assertRaisesRegex(ValueError, 'primary search phrase'):
+            a.validate_script(script, 'details')
+        script = script_payload()
+        script['hashtags'].append('#Gaming')
+        with self.assertRaisesRegex(ValueError, '2-3 relevant hashtags'):
+            a.validate_script(script, 'details')
 
     def test_caption_escape_and_endpoint(self):
         result = a.captions('Hello {override} \\N world today', 25)
