@@ -166,7 +166,7 @@ def make_script(client, cfg, kind, clip, history):
                         sources.append(url)
         sources = list(dict.fromkeys(sources))
         if not sources:
-            raise ValueError('No cited Rockstar evidence. Holding video.')
+            raise ValueError('Web search returned no Rockstar URLs. Holding video.')
     prompt = {'kind': kind, 'research': evidence, 'footage_description': clip['description'], 'previous_titles': history}
     response = client.responses.create(
         model=cfg['text_model'], max_output_tokens=1500,
