@@ -152,3 +152,13 @@ curiosity hook, a few factual beats and a payoff, with three-word captions and a
 more focused voice direction. Both use original scripts and the same licensed
 footage catalog; neither copies creator wording. The renderer does not yet select
 scenes to match individual sentences.
+
+## Search metadata
+
+Each new Short generates a primary search phrase, a concise topic-first title, a
+unique description that uses that phrase near the start, 4-10 relevant YouTube
+tags, and 2-3 related hashtags. Metadata must match the narration and cited
+research; the uploader adds the footage credit and source links. This is relevance
+based metadata generation, not keyword-volume research. YouTube says titles and
+descriptions matter more for discovery, while tags have a minimal role except for
+common misspellings. No metadata can guarantee views or virality.
