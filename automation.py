@@ -301,17 +301,25 @@ def upload(db, job, cfg):
     status = cfg['privacy']
     if status not in ['private', 'unlisted', 'public']:
         raise ValueError('Invalid privacy setting')
-    description = (script['description'].strip() + '\n\n' + ' '.join(script['hashtags']) +
-                   '\n\nAI-generated narration. Gameplay is illustrative.' +
-                   (' Fictional gameplay story.' if script['kind'] == 'story' else '') +
-                   '\n\nFootage: ' + script['credit'] + '\nSources:\n' + '\n'.join(script['sources']))
+    if script.get('description'):
+        description = (script['description'].strip() + '\n\n' + ' '.join(script.get('hashtags', [])) +
+                       '\n\nAI-generated narration. Gameplay is illustrative.')
+    else:
+        # Preserve upload compatibility for jobs rendered before SEO fields were added.
+        description = ('Original GTA commentary. AI-generated narration. Gameplay is illustrative.' +
+                       (' Fictional gameplay story.' if script['kind'] == 'story' else '') +
+                       '\n#GTA #GTACraze #Shorts')
+    description += '\n\nFootage: ' + script['credit'] + '\nSources:\n' + '\n'.join(script['sources'])
     # Durable upload-intent: ambiguous network failure must be reconciled manually, never auto-retried.
     cursor = db.execute("UPDATE jobs SET status='uploading' WHERE id=? AND status='rendered'", (job,))
     db.commit()
     if cursor.rowcount != 1:
         raise ValueError('Job already uploaded, in progress, or requires manual reconciliation.')
+    snippet = {'title': script['title'], 'description': description[:4900], 'categoryId': '20', 'defaultLanguage': 'en'}
+    if script.get('tags'):
+        snippet['tags'] = script['tags']
     request = api.videos().insert(part='snippet,status', body={
-        'snippet': {'title': script['title'], 'description': description[:4900], 'tags': script['tags'], 'categoryId': '20', 'defaultLanguage': 'en'},
+        'snippet': snippet,
         'status': {'privacyStatus': status, 'selfDeclaredMadeForKids': False}},
         media_body=MediaFileUpload(str(jobdir / 'video.mp4'), mimetype='video/mp4', resumable=True))
     response = None
