@@ -35,6 +35,8 @@ def write(path, value):
 def config():
     from dotenv import load_dotenv
     load_dotenv(ROOT / '.env')
+    if os.name == 'nt' and Path(r'C:\ffmpeg\bin\ffmpeg.exe').exists():
+        os.environ['PATH'] = r'C:\ffmpeg\bin' + os.pathsep + os.environ.get('PATH', '')
     return read(ROOT / 'config.json')
 
 
@@ -250,11 +252,13 @@ def run():
     cfg = config()
     if cfg['mode'] not in ['draft', 'publish']:
         raise ValueError('mode must be draft or publish')
-    clips = media_entries()  # Fail before paid API calls if no footage.
     if not shutil.which('ffmpeg') or not shutil.which('ffprobe'):
         raise ValueError('FFmpeg and FFprobe are required')
     if not os.getenv('OPENAI_API_KEY'):
         raise ValueError('Add OPENAI_API_KEY to local .env')
+    from auto_footage import sync
+    sync(ROOT)
+    clips = media_entries()  # Download before paid API calls.
     db = database()
     if cfg['mode'] == 'publish':
         youtube()  # Check authorization before paying for generation.
@@ -289,7 +293,7 @@ def run():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('command', choices=['doctor', 'login', 'run', 'upload', 'status'])
+    parser.add_argument('command', choices=['doctor', 'login', 'run', 'upload', 'status', 'fetch-footage'])
     parser.add_argument('--job')
     args = parser.parse_args()
     cfg = config()
@@ -305,7 +309,12 @@ def main():
         from filelock import FileLock
         DATA.mkdir(exist_ok=True)
         with FileLock(str(DATA / 'runner.lock'), timeout=0):
-            if args.command == 'run':
+            if args.command == 'fetch-footage':
+                if not shutil.which('ffmpeg') or not shutil.which('ffprobe'):
+                    raise ValueError('FFmpeg and FFprobe are required')
+                from auto_footage import sync
+                sync(ROOT)
+            elif args.command == 'run':
                 run()
             elif args.command == 'upload':
                 if not args.job or not re.fullmatch(r'\d{8}T\d{12}', args.job):

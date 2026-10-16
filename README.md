@@ -101,3 +101,23 @@ There is no automated channel analytics optimization or comment moderation yet. 
 - https://developers.openai.com/api/docs/guides/text-to-speech
 - https://developers.google.com/youtube/data/reference/rest/v3/videos/insert
 - https://github.com/youtube/api-samples/blob/master/python/upload_video.py
+
+## Automatic approved footage
+
+Install updated requirements, then run `python automation.py fetch-footage` to
+check and download the approved video without using OpenAI credits or uploading.
+`run` now performs this step automatically too. `footage-sources.json` contains
+one user-approved source and the permission statement supplied by the user.
+The downloader checks that statement against the live description on first download,
+saves the description and permission record, caches up to 1080p MP4 video, and
+creates silent 60-second excerpts between the supplied chapter boundaries.
+It preserves manual catalog entries and reuses cached files on later runs.
+The default Windows FFmpeg directory C:\ffmpeg\bin is detected automatically.
+
+This is timestamp clipping, not visual scene understanding. Creator claims are
+not research evidence; scripts still use the existing Rockstar research workflow.
+No live download or production upload was verified in the development environment.
+YouTube may require a supported JavaScript runtime such as Deno, or reject a
+request; the program stops rather than bypassing sign-in/access restrictions.
+Install Deno if yt-dlp reports a missing JavaScript runtime. Keep yt-dlp current.
+Cached permission is not a rights guarantee for third-party material in a video.
