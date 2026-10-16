@@ -211,7 +211,7 @@ def render(jobdir, clip, script):
                     '-vf', "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,ass=captions.ass",
                     '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11', '-c:v', 'libx264', '-preset', 'fast',
                     '-crf', '22', '-pix_fmt', 'yuv420p', '-r', '30', '-c:a', 'aac', '-movflags', '+faststart', 'video.mp4'],
-                   cwd=jobdir, check=True, timeout=1800)
+                   cwd=jobdir, stdin=subprocess.DEVNULL, check=True, timeout=1800)
     if abs(duration(jobdir / 'video.mp4') - seconds) > 1:
         raise ValueError('Rendered duration mismatch')
 
