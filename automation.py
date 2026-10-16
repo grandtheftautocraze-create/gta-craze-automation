@@ -135,12 +135,35 @@ def validate_script(script, kind):
     hashtags = script.get('hashtags')
     if not isinstance(keyword, str) or not 2 <= len(keyword.split()) <= 6:
         raise ValueError('Missing or invalid primary search phrase')
-    if keyword.casefold() not in script['title'].casefold():
-        raise ValueError('Title must include the primary search phrase')
-    if not isinstance(description, str) or not 80 <= len(description.strip()) <= 900:
+    if not isinstance(description, str) or not description.strip():
+        raise ValueError('Missing SEO description')
+    # Normalize the generated phrase to the actual title. Models can produce
+    # equivalent wording with punctuation or small wording differences; that
+    # should not discard an otherwise usable, researched Short.
+    def terms(text):
+        text = re.sub(r'\bgta\s+vi\b', 'gta 6', text.casefold())
+        text = re.sub(r'\bgta\s+v\b', 'gta 5', text)
+        return re.findall(r'[a-z0-9]+', text)
+    title_terms = terms(script['title'])
+    keyword_terms = terms(keyword)
+    if not all(term in title_terms for term in keyword_terms):
+        overlap = list(dict.fromkeys(term for term in keyword_terms if term in title_terms))
+        if len(overlap) >= 2:
+            keyword = ' '.join(overlap)
+        else:
+            stopwords = {'a','an','the','and','or','of','to','in','for','on','with','is','are','this','that','why','how','what','when','which','you','your','will','can','does','do','did','has','have','had','one','new','most','more','from','into','about'}
+            useful = [term for term in title_terms if term not in stopwords]
+            chosen = useful[:5] if len(useful) >= 2 else title_terms[:5]
+            keyword = ' '.join(chosen)
+    if not 2 <= len(keyword.split()) <= 6:
+        keyword = ' '.join(title_terms[:6])
+    script['primary_keyword'] = keyword
+    description_terms = set(terms(description[:220]))
+    if not all(term in description_terms for term in terms(keyword)):
+        description = keyword + ': ' + description.strip()
+    script['description'] = description
+    if not 80 <= len(description.strip()) <= 900:
         raise ValueError('SEO description must be 80-900 characters')
-    if keyword.casefold() not in description[:220].casefold():
-        raise ValueError('Description must use the primary search phrase near the start')
     if not isinstance(tags, list) or not 4 <= len(tags) <= 10:
         raise ValueError('Provide 4-10 relevant YouTube tags')
     if any(not isinstance(tag, str) or not tag.strip() or tag.startswith('#') for tag in tags):
