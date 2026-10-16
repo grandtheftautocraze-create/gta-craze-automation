@@ -96,7 +96,7 @@ def youtube(login=False):
     DATA.mkdir(exist_ok=True)
     write(token, json.loads(creds.to_json()))
     api = build('youtube', 'v3', credentials=creds)
-    channels = api.channels().list(part='snippet', mine=True).execute().get('items', [])
+    channels = api.channels().list(part='snippet', mine=True).execute(num_retries=3).get('items', [])
     if not any(c['id'] == CHANNEL for c in channels):
         raise ValueError('Wrong YouTube channel authorized. Remove data/youtube-token.json and sign in to GTA Craze.')
     return api
@@ -324,7 +324,7 @@ def upload(db, job, cfg):
         media_body=MediaFileUpload(str(jobdir / 'video.mp4'), mimetype='video/mp4', resumable=True))
     response = None
     while response is None:
-        _, response = request.next_chunk(num_retries=0)
+        _, response = request.next_chunk(num_retries=3)
     write(jobdir / 'upload.json', response)
     db.execute("UPDATE jobs SET status='uploaded',video_id=? WHERE id=?", (response['id'], job))
     db.commit()
