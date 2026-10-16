@@ -4,5 +4,5 @@
   "text_model": "gpt-4.1-mini",
   "voice_model": "gpt-4o-mini-tts",
   "voice": "onyx",
-  "monthly_attempt_cap": 12
+  "monthly_attempt_cap": 62
 }
