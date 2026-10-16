@@ -9,7 +9,7 @@ Local production runner for English GTA news, explained details and clearly fict
 - FFmpeg 1080×1920 video rendering, five-word captions and normalized narration.
 - Local SQLite job history, monthly attempt cap, process lock and upload-intent records.
 - Direct YouTube OAuth upload with an exact channel-ID check and private visibility by default.
-- Optional Windows scheduled task: Monday, Wednesday and Friday, 8 PM Windows local time.
+- Optional Windows scheduled tasks: one community-style Short daily at noon and one explainer Short daily at 8 PM Windows local time.
 
 ## What still needs setup
 
@@ -77,17 +77,18 @@ After the private test succeeds, run the following in PowerShell from the folder
 powershell -NoProfile -ExecutionPolicy Bypass -File .\install-schedule.ps1
 ```
 
-This registers one task under your current Windows user; it runs only while you are signed in. Screen locking is fine. The task attempts to wake the machine, but firmware/power settings may prevent wakeup. Leave it awake with internet for reliable operation. Set Windows to Pakistan time for the intended schedule. Logs are in `data/runner.log`. Missed runs may execute on the next available opportunity. No automatic retries are registered.
+This replaces the older `GTA Craze Production` task and registers two tasks under your current Windows user: a community format at 12 PM and an explainer at 8 PM, every day. Times use the Windows time zone. The tasks run only while you are signed in; screen locking is fine. The task attempts to wake the machine, but firmware/power settings may prevent wakeup. Leave it awake with internet for reliable operation. Set Windows to Pakistan time if you want Pakistan local times. Logs are in `data/runner.log`. Missed runs may execute on the next available opportunity. No automatic retries are registered.
 
 To stop:
 
 ```powershell
-Unregister-ScheduledTask -TaskName 'GTA Craze Production' -Confirm:$false
+Unregister-ScheduledTask -TaskName 'GTA Craze Community' -Confirm:$false
+Unregister-ScheduledTask -TaskName 'GTA Craze Explainer' -Confirm:$false
 ```
 
 ## Cost controls and limits
 
-The starting limit is **12 generation attempts per UTC calendar month**, including failed/held attempts. This is a volume limit, **not a guaranteed PKR 10,000 spending cap**. Provider prices, model choice, search usage, taxes, exchange rates and footage costs affect actual spend. Check provider billing after the pilot, set account-side controls and adjust the attempt cap. No purchases are made by installing this project.
+The current limit is **62 generation attempts per UTC calendar month**, including failed/held attempts. At two scheduled runs each day, this allows up to 31 days of attempts; failed or held runs still count. This is a volume limit, **not a guaranteed PKR 10,000 spending cap**. Provider prices, model choice, search usage, taxes, exchange rates and footage costs affect actual spend. Check provider billing and set account-side controls. No purchases are made by installing this project.
 
 There is no automated channel analytics optimization or comment moderation yet. Use Metricool with ChatGPT for analysis. Long-term unattended sourcing and editorial quality still require work; do not treat this first runner as a fully managed channel.
 
@@ -141,11 +142,13 @@ audio, credits the source, and keeps a log. Review Studio notices when available
 
 ## Short-form style
 
-Scripts now open directly on a specific curiosity hook, explain one idea in a few
-short beats, and land on a payoff. The voice uses the Coral preset with direction
-for a warm, energetic gaming storyteller. The edit uses a blurred vertical backdrop,
-a clear gameplay panel, subtle motion, and timed high-contrast captions. These are
-original format choices informed by GTA TV Official Channel's fast detail/news
-hooks; narration and wording are not copied. The renderer still uses the same
-approved footage source throughout a Short, so it does not yet select scenes to
-match individual sentences.
+The daily community format opens on a nostalgic comparison, relatable observation,
+or playful contrast, builds a few vivid beats, and ends with a fan question. It gets
+a larger gameplay panel, more active zoom, faster two-word captions, and playful
+voice direction. This is informed by publicly indexed @gtacommunity captions; the
+Instagram Reels grid did not load in the logged-out research view, so exact reel
+editing and narration could not be verified. The daily explainer format uses a
+curiosity hook, a few factual beats and a payoff, with three-word captions and a
+more focused voice direction. Both use original scripts and the same licensed
+footage catalog; neither copies creator wording. The renderer does not yet select
+scenes to match individual sentences.
