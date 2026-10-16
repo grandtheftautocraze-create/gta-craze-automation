@@ -51,12 +51,13 @@ class Tests(unittest.TestCase):
         script['ready'] = False
         with self.assertRaises(ValueError): a.validate_script(script, 'news')
 
-    def test_seo_metadata_requires_relevant_keyword_and_bounded_tags(self):
+    def test_seo_metadata_reconciles_keyword_and_bounds_tags(self):
         script = script_payload()
         self.assertEqual(a.validate_script(script, 'details')['primary_keyword'], 'GTA 5 police chases')
         script['title'] = 'A hidden detail in this game'
-        with self.assertRaisesRegex(ValueError, 'primary search phrase'):
-            a.validate_script(script, 'details')
+        repaired = a.validate_script(script, 'details')
+        self.assertEqual(repaired['primary_keyword'], 'hidden detail game')
+        self.assertIn(repaired['primary_keyword'], repaired['description'][:220])
         script = script_payload()
         script['hashtags'].append('#Gaming')
         with self.assertRaisesRegex(ValueError, '2-3 relevant hashtags'):
