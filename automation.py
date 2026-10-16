@@ -206,7 +206,7 @@ def render(jobdir, clip, script):
         raise ValueError(f'Voice duration {seconds:.1f}s outside 20-60s; hold for revision.')
     (jobdir / 'captions.ass').write_text(captions(script['narration'], seconds), encoding='utf-8')
     # Relative subtitle path avoids Windows drive-letter escaping in FFmpeg filters.
-    subprocess.run(['ffmpeg', '-y', '-v', 'error', '-stream_loop', '-1', '-i', str((ROOT / clip['file']).resolve()),
+    subprocess.run(['ffmpeg', '-nostdin', '-y', '-v', 'error', '-stream_loop', '-1', '-i', str((ROOT / clip['file']).resolve()),
                     '-i', 'voice.wav', '-t', str(seconds), '-map', '0:v:0', '-map', '1:a:0',
                     '-vf', "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,ass=captions.ass",
                     '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11', '-c:v', 'libx264', '-preset', 'fast',
