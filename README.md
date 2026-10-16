@@ -121,3 +121,19 @@ YouTube may require a supported JavaScript runtime such as Deno, or reject a
 request; the program stops rather than bypassing sign-in/access restrictions.
 Install Deno if yt-dlp reports a missing JavaScript runtime. Keep yt-dlp current.
 Cached permission is not a rights guarantee for third-party material in a video.
+
+## Hands-off scheduled publishing
+
+The runner can search the YouTube Data API for new GTA videos explicitly marked
+Creative Commons, verify `status.license=creativeCommon`, download and cache up
+to six minutes of silent gameplay, and add required attribution. It waits until
+all current excerpts have been used once before looking for another source.
+The scheduler runs the complete research, script, voice, edit, and upload flow.
+The current configuration is `publish` / `public`; each scheduled success uploads
+publicly. The computer must stay on, connected, and signed into the same Windows
+account. Install the scheduled task once with PowerShell and `install-schedule.ps1`.
+API calls can fail; no system can guarantee accurate research, a clean copyright
+status, or engagement. The system does not yet moderate comments or make analytics
+changes. YouTube API search for CC is the license filter; this cannot independently
+prove that every uploader controls every embedded asset. The code strips original
+audio, credits the source, and keeps a log. Review Studio notices when available.

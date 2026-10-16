@@ -265,7 +265,11 @@ def run():
     history = [read(p)['title'] for p in sorted(DATA.glob('*/script.json'))][-40:]
     index = db.execute('SELECT count(*) FROM jobs').fetchone()[0]
     kind = ['news', 'details', 'story', 'news', 'details'][index % 5]
-    clip = clips[index % len(clips)]
+    usage_path = DATA / 'clip-usage.json'
+    usage = read(usage_path) if usage_path.exists() else {}
+    clip = min(clips, key=lambda item: (usage.get(item['file'], 0), item['file']))
+    usage[clip['file']] = usage.get(clip['file'], 0) + 1
+    write(usage_path, usage)
     job = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f')
     reserve(db, job, cfg['monthly_attempt_cap'])
     jobdir = DATA / job

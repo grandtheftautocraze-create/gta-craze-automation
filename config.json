@@ -1,6 +1,6 @@
 {
-  "mode": "draft",
-  "privacy": "private",
+  "mode": "publish",
+  "privacy": "public",
   "text_model": "gpt-4.1-mini",
   "voice_model": "gpt-4o-mini-tts",
   "voice": "onyx",
