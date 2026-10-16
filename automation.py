@@ -335,5 +335,12 @@ if __name__ == '__main__':
         print('Stopped:', type(exc).__name__)
         if isinstance(exc, ValueError):
             print(str(exc))
+        elif type(exc).__name__ == 'BadRequestError' and type(exc).__module__.startswith('openai'):
+            # OpenAI's error message identifies rejected parameters; never print headers or request objects.
+            detail = getattr(exc, 'message', '') or 'No error message returned.'
+            print('OpenAI request details:', str(detail)[:600])
+            request_id = getattr(exc, 'request_id', None)
+            if request_id:
+                print('OpenAI request ID:', request_id)
         print('Check setup and data/status. Uploading jobs require reconciliation in YouTube Studio before retrying.')
         sys.exit(1)
