@@ -137,3 +137,15 @@ status, or engagement. The system does not yet moderate comments or make analyti
 changes. YouTube API search for CC is the license filter; this cannot independently
 prove that every uploader controls every embedded asset. The code strips original
 audio, credits the source, and keeps a log. Review Studio notices when available.
+
+
+## Short-form style
+
+Scripts now open directly on a specific curiosity hook, explain one idea in a few
+short beats, and land on a payoff. The voice uses the Coral preset with direction
+for a warm, energetic gaming storyteller. The edit uses a blurred vertical backdrop,
+a clear gameplay panel, subtle motion, and timed high-contrast captions. These are
+original format choices informed by GTA TV Official Channel's fast detail/news
+hooks; narration and wording are not copied. The renderer still uses the same
+approved footage source throughout a Short, so it does not yet select scenes to
+match individual sentences.
