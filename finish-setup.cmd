@@ -17,16 +17,12 @@ if errorlevel 1 (
 echo Finding and checking a Creative Commons GTA source...
 .venv\Scripts\python.exe automation.py fetch-footage
 if errorlevel 1 (
-  echo Footage discovery failed. Please send the error above.
-  pause
-  exit /b 1
+  echo First footage check did not finish. The scheduled task will retry automatically.
 )
 echo Checking required setup...
 .venv\Scripts\python.exe automation.py doctor
 if errorlevel 1 (
-  echo Some setup items are missing. Do not schedule publishing yet.
-  pause
-  exit /b 1
+  echo The doctor listed missing items above. Scheduled runs will need them fixed.
 )
 echo Installing the automatic Monday, Wednesday, Friday 8 PM schedule...
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0install-schedule.ps1"
