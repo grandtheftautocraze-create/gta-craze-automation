@@ -1,12 +1,12 @@
 [
   {
-    "video_id": "toQkKWEs2iE",
+    "video_id": "QqRRG1ZfsAs",
     "enabled": true,
     "permission_confirmed": true,
-    "permission_statement": "Free to use my videos in your clips",
-    "credit": "The GTA Assassin / Lazy Assassin",
-    "description": "Creator commentary video about GTA 6; illustrative background only. Do not treat its claims as verified facts or imply it depicts a fictional story.",
-    "start_seconds": 35,
-    "end_seconds": 704
+    "permission_statement": "Free to use, but please credit this channel in your video description if you use any content.",
+    "credit": "Dope Gameplays (@DopeGameplays)",
+    "description": "GTA V mega-ramp gameplay; use as illustrative silent background. Do not present as GTA 6 footage or reupload as a standalone no-copyright gameplay video.",
+    "start_seconds": 0,
+    "end_seconds": 360
   }
 ]
