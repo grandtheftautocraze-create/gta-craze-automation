@@ -63,16 +63,18 @@ class Tests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, '2-3 relevant hashtags'):
             a.validate_script(script, 'details')
 
-    def test_caption_escape_and_endpoint(self):
-        result = a.captions('Hello {override} \\N world today', 25)
-        self.assertNotIn('{override}', result)
-        self.assertIn('0:00:25.00', result)
+    def test_caption_measured_timing_and_position(self):
+        words = [{'word': 'Hello', 'start': 0.4, 'end': 0.8},
+                 {'word': '{world}', 'start': 1.7, 'end': 2.1}]
+        result = a.captions(words, 3)
+        self.assertIn('0:00:00.40,0:00:00.80', result)
+        self.assertIn('0:00:01.70,0:00:02.10', result)
+        self.assertIn(r'\pos(510,1210)', result)
+        self.assertNotIn('{world}', result)
 
-    def test_community_caption_style_is_distinct(self):
-        explainer = a.captions('One two three four five six', 20)
-        community = a.captions('One two three four five six', 20, 'community')
-        self.assertIn('GTA CRAZE  /  QUICK BREAKDOWN', explainer)
-        self.assertIn('GTA COMMUNITY', community)
-        self.assertNotEqual(explainer, community)
+    def test_caption_rejects_missing_and_bad_timings(self):
+        for words in [[], 'text', [{'word':'x', 'start':2, 'end':1}]]:
+            with self.assertRaises(ValueError):
+                a.captions(words, 3)
 
 if __name__ == '__main__': unittest.main()
