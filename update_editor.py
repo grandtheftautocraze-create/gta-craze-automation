@@ -12,6 +12,10 @@ try:
     if not (root / 'automation.py').is_file():
         raise ValueError('Existing GTA Craze installation was not found.')
     with FileLock(str(root / 'data' / 'runner.lock'), timeout=0):
+        footage = source.parent / 'auto_footage.py'
+        py_compile.compile(str(footage), doraise=True)
+        if footage.resolve() != (root / 'auto_footage.py').resolve():
+            shutil.copy2(footage, root / 'auto_footage.py')
         module = source.parent / 'montage.py'
         py_compile.compile(str(module), doraise=True)
         py_compile.compile(str(source), doraise=True)
