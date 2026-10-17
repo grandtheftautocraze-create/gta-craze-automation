@@ -6,6 +6,13 @@
       "action": "ping",
       "created_at": "2026-10-17T09:57:09+00:00",
       "expires_at": "2026-10-17T10:27:09+00:00"
+    },
+    {
+      "id": "community-20261017-095817",
+      "action": "generate_upload",
+      "format": "community",
+      "created_at": "2026-10-17T09:58:17+00:00",
+      "expires_at": "2026-10-17T10:58:17+00:00"
     }
   ]
 }
