@@ -252,33 +252,69 @@ def ass_time(seconds):
     return f'{centis // 360000}:{centis // 6000 % 60:02d}:{centis // 100 % 60:02d}.{centis % 100:02d}'
 
 
-def captions(text, seconds, style='explainer'):
-    words = text.split()
-    community = style == 'community'
-    group_size = 2 if community else 3
-    header_text = 'GTA COMMUNITY' if community else 'GTA CRAZE  /  QUICK BREAKDOWN'
-    header = '''[Script Info]
+def timed_words(client, jobdir, narration):
+    # Measure the actual generated speech, including pauses; never guess timing.
+    with (jobdir / 'voice.wav').open('rb') as audio:
+        result = client.audio.transcriptions.create(
+            model='whisper-1', file=audio, language='en',
+            response_format='verbose_json', timestamp_granularities=['word'],
+            prompt=narration)
+    payload = result.model_dump(mode='json')
+    words = payload.get('words') or []
+    from difflib import SequenceMatcher
+    normalize = lambda text: re.findall(r"[a-z0-9]+", text.casefold())
+    similarity = SequenceMatcher(None, normalize(narration),
+        normalize(' '.join(w['word'] for w in words))).ratio()
+    if similarity < 0.85:
+        raise ValueError('Caption transcript differs from narration; holding for review.')
+    write(jobdir / 'word-timings.json', words)
+    return words
+
+
+def captions(words, seconds, style='explainer'):
+    if not isinstance(words, list) or not words:
+        raise ValueError('Measured word timestamps are required for captions.')
+    previous_end = 0.0
+    for word in words:
+        start, end = float(word['start']), float(word['end'])
+        if not (0 <= start < end <= seconds + 0.1) or start < previous_end - 0.05:
+            raise ValueError('Invalid or overlapping word timing; holding video.')
+        previous_end = end
+    header = """[Script Info]
 ScriptType: v4.00+
 PlayResX: 1080
 PlayResY: 1920
+WrapStyle: 2
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,Arial,78,&H00FFFFFF,&H000000FF,&H00101010,&H80000000,-1,0,0,0,100,100,0,0,1,6,3,2,80,80,375,1
-Style: Brand,Arial,34,&H00FFFF66,&H000000FF,&H00101010,&H80000000,-1,0,0,0,100,100,2,0,1,3,1,8,60,60,0,1
+Style: Default,Arial,76,&H00FFFFFF,&H000000FF,&H00101010,&H80000000,-1,0,0,0,100,100,0,0,1,5,2,5,100,160,0,1
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-'''
-    if community:
-        header = header.replace('Arial,78,', 'Arial,86,').replace('GTA CRAZE  /  QUICK BREAKDOWN', 'GTA COMMUNITY')
-    lines = [f'Dialogue: 0,0:00:00.00,{ass_time(seconds)},Brand,,0,0,0,,{header_text}']
-    for start in range(0, len(words), group_size):
-        end = min(start + group_size, len(words))
-        clean = [word.replace('\\', '').replace('{', '').replace('}', '') for word in words[start:end]]
-        if len(clean) > 1:
-            chunk = ' '.join(clean[:-1]) + r' {\c&H0000FFFF&}' + clean[-1] + r'{\c&H00FFFFFF&}'
-        else:
-            chunk = r'{\c&H0000FFFF&}' + clean[0] + r'{\c&H00FFFFFF&}'
-        lines.append(f'Dialogue: 0,{ass_time(seconds * start / len(words))},{ass_time(seconds * end / len(words))},Default,,0,0,0,,{chunk}')
+"""
+    lines = []
+    # Short phrases; each highlight event follows its spoken word.
+    groups, group = [], []
+    for word in words:
+        if group and (len(group) >= (2 if style == 'community' else 3)
+                or word['start'] - group[-1]['end'] > 0.3
+                or sum(len(w['word']) + 1 for w in group) + len(word['word']) > 20):
+            groups.append(group)
+            group = []
+        group.append(word)
+        if re.search(r'[.!?]$', word['word']):
+            groups.append(group)
+            group = []
+    if group:
+        groups.append(group)
+    for group in groups:
+        for active, word in enumerate(group):
+            text = []
+            for index, item in enumerate(group):
+                clean = re.sub(r'[\\{}\r\n]', '', item['word']).strip()
+                color = r'{\c&H0000FFFF&}' if index == active else r'{\c&H00FFFFFF&}'
+                text.append(color + clean)
+            content = r'{\an5\pos(510,1210)}' + ' '.join(text)
+            lines.append(f"Dialogue: 0,{ass_time(word['start'])},{ass_time(min(seconds, word['end']))},Default,,0,0,0,,{content}")
     return header + '\n'.join(lines)
 
 
@@ -287,22 +323,12 @@ def render(jobdir, clip, script):
     if not 20 <= seconds <= 60:
         raise ValueError(f'Voice duration {seconds:.1f}s outside 20-60s; hold for revision.')
     style = script.get('format', 'explainer')
-    (jobdir / 'captions.ass').write_text(captions(script['narration'], seconds, style), encoding='utf-8')
-    # Relative subtitle path avoids Windows drive-letter escaping in FFmpeg filters.
-    if style == 'community':
-        panel_height, panel_y, zoom_amount = 760, 580, '0.022'
-    else:
-        panel_height, panel_y, zoom_amount = 608, 640, '0.012'
+    (jobdir / 'captions.ass').write_text(captions(read(jobdir / 'word-timings.json'), seconds, style), encoding='utf-8')
+    # Fill the portrait canvas without stretching; horizontal footage loses edges.
     video_filter = (
-        "[0:v]split=2[bgsrc][fgsrc];"
-        "[bgsrc]scale=540:960:force_original_aspect_ratio=increase,"
-        "crop=540:960,boxblur=18:6,scale=1080:1920,"
-        "eq=brightness=-0.10:saturation=0.72[bg];"
-        f"[fgsrc]fps=30,scale=1080:{panel_height}:force_original_aspect_ratio=increase,"
-        f"crop=1080:{panel_height},zoompan=z='1+{zoom_amount}*mod(on,180)/180':"
-        f"x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=1080x{panel_height}:fps=30,"
-        "eq=contrast=1.06:saturation=1.14[fg];"
-        f"[bg][fg]overlay=0:{panel_y},ass=captions.ass,format=yuv420p[v]"
+        "[0:v]fps=30,scale=1080:1920:force_original_aspect_ratio=increase,"
+        "crop=1080:1920,setsar=1,eq=contrast=1.04:saturation=1.08,"
+        "ass=captions.ass,format=yuv420p[v]"
     )
     subprocess.run(['ffmpeg', '-nostdin', '-y', '-v', 'error', '-stream_loop', '-1', '-i', str((ROOT / clip['file']).resolve()),
                     '-i', 'voice.wav', '-t', str(seconds), '-filter_complex', video_filter,
@@ -398,6 +424,7 @@ def run(format_name='explainer'):
         with client.audio.speech.with_streaming_response.create(model=cfg['voice_model'], voice=cfg['voice'],
                 input=script['narration'], instructions=voice_direction, response_format='wav') as response:
             response.stream_to_file(jobdir / 'voice.wav')
+        timed_words(client, jobdir, script['narration'])
         render(jobdir, clip, script)
         db.execute("UPDATE jobs SET status='rendered' WHERE id=?", (job,))
         db.commit()
