@@ -274,12 +274,30 @@ def timed_words(client, jobdir, narration):
 def captions(words, seconds, style='explainer'):
     if not isinstance(words, list) or not words:
         raise ValueError('Measured word timestamps are required for captions.')
-    previous_end = 0.0
+    # ASR may return zero-duration tokens and small boundary overlaps.
+    # Merge instantaneous tokens into adjacent measured speech, rather than
+    # inventing evenly spaced timing or rejecting the entire recording.
+    import math
+    normalized, pending = [], []
     for word in words:
         start, end = float(word['start']), float(word['end'])
-        if not (0 <= start < end <= seconds + 0.1) or start < previous_end - 0.05:
-            raise ValueError('Invalid or overlapping word timing; holding video.')
-        previous_end = end
+        if not all(math.isfinite(t) for t in (start, end)) or not (0 <= start <= end <= seconds + 0.15):
+            raise ValueError('Invalid word timing; holding video.')
+        if normalized and start < normalized[-1]['end'] - 0.15:
+            raise ValueError('Substantially overlapping word timing; holding video.')
+        start = max(start, normalized[-1]['end'] if normalized else 0)
+        end = min(end, seconds)
+        if end - start < 0.01:
+            pending.append(word['word'])
+            continue
+        text = ' '.join(pending + [word['word']])
+        pending = []
+        normalized.append(dict(word=text, start=start, end=end))
+    if not normalized:
+        raise ValueError('No usable measured word timing; holding video.')
+    if pending:
+        normalized[-1]['word'] += ' ' + ' '.join(pending)
+    words = normalized
     header = """[Script Info]
 ScriptType: v4.00+
 PlayResX: 1080
