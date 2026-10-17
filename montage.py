@@ -32,7 +32,7 @@ def build(root, jobdir, clips, seconds):
         length = min([2.4, 3.2, 2.8, 3.6][len(chosen) % 4], seconds-elapsed)
         last = chosen[-1]['source'] if chosen else None
         ranked = sorted((c for c in candidates if c['key'] not in used and c['source'] != last),
-            key=lambda c:(source_counts.get(c['source'],0), history.get(c['key'],0), c['key']))
+            key=lambda c:(source_counts.get(c['source'],0), history.get(c['key'],0), -next(i for i, clip in enumerate(clips) if clip['file'] == c['clip']['file']), c['key']))
         accepted = None
         for candidate in ranked[:40]:
             used.add(candidate['key'])
