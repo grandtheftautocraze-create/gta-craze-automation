@@ -1,13 +1,14 @@
 {
   "version": 1,
-  "checked_at": "2026-10-17T09:57:42.547004+00:00",
+  "checked_at": "2026-10-17T09:57:44.326004+00:00",
   "connection": "verified",
   "jobs": [
     {
       "id": "ping-20261017-095709",
-      "state": "started",
+      "state": "pong",
       "action": "ping",
-      "started_at": "2026-10-17T09:57:41.425761+00:00"
+      "started_at": "2026-10-17T09:57:41.425761+00:00",
+      "finished_at": "2026-10-17T09:57:43.791287+00:00"
     }
   ]
 }
