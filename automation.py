@@ -419,6 +419,8 @@ def run(format_name='explainer'):
         if script['title'].casefold() in [h.casefold() for h in history]:
             raise ValueError('Duplicate topic title held')
         write(jobdir / 'script.json', script)
+        # Search with this video's actual topic before rendering; licensed results only.
+        sync(ROOT, topic=script['primary_keyword'])
         voice_direction = cfg.get('voice_instructions',
                 'Energetic, warm gaming storyteller. Conversational English, medium-fast pace, crisp articulation, lively pitch changes, and a short beat before the payoff. Sound confident and natural, never robotic or shouty.')
         if format_name == 'community':
