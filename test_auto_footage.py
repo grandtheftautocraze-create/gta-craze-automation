@@ -16,6 +16,29 @@ class FakeAPI:
     def videos(self): return FakeVideos(self.items)
 
 class Downloads(unittest.TestCase):
+    def test_topic_search_and_duplicate_exclusion(self):
+        calls = []
+        class Response:
+            def __init__(self, items): self.items = items
+            def execute(self): return {'items': self.items}
+        class API:
+            def search(self): return self
+            def videos(self): return self
+            def list(self, **kwargs):
+                calls.append(kwargs)
+                if kwargs['part'] == 'id,snippet':
+                    return Response([{'id': {'videoId': 'new12345678'}}, {'id': {'videoId': 'old12345678'}}])
+                return Response([{'id':'new12345678','status':{'license':'creativeCommon'},
+                    'snippet':{'title':'GTA 5 police chase gameplay','channelTitle':'Creator'}}])
+        with tempfile.TemporaryDirectory() as temp:
+            config = {'sources':[{'video_id':'old12345678'}]}
+            with patch('automation.youtube', return_value=API()):
+                result = auto_footage.discover(Path(temp), config, 'GTA 5 police chase')
+            self.assertEqual(result['video_id'], 'new12345678')
+            self.assertIn('GTA 5 police chase', calls[0]['q'])
+            self.assertEqual(calls[0]['videoLicense'], 'creativeCommon')
+            self.assertNotIn('old12345678', calls[1]['id'])
+
     def test_non_cc_source_fails_closed_without_downloading(self):
         class Fake:
             def __init__(self, opts): pass
