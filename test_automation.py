@@ -72,6 +72,17 @@ class Tests(unittest.TestCase):
         self.assertIn(r'\pos(510,1210)', result)
         self.assertNotIn('{world}', result)
 
+    def test_caption_handles_zero_duration_and_small_overlap(self):
+        result = a.captions([
+            {'word':'GTA','start':0.2,'end':0.2},
+            {'word':'five','start':0.2,'end':0.6},
+            {'word':'chaos','start':0.55,'end':1.0}], 2)
+        self.assertIn('GTA five', result)
+        self.assertIn('0:00:00.60,0:00:01.00', result)
+        with self.assertRaises(ValueError):
+            a.captions([{'word':'one','start':0,'end':1},
+                        {'word':'two','start':0.2,'end':1.5}], 2)
+
     def test_caption_rejects_missing_and_bad_timings(self):
         for words in [[], 'text', [{'word':'x', 'start':2, 'end':1}]]:
             with self.assertRaises(ValueError):
