@@ -142,7 +142,7 @@ def process(api, activated, state_path, clock=None, execute_job=execute):
         recent = sum(r.get('action') == 'generate_upload' and stamp(r['started_at']) > clock - timedelta(hours=24)
                      for r in state['jobs'].values())
         if job['action'] == 'generate_upload':
-            if recent >= 2:
+            if recent >= 6:
                 continue
             # Wait for a scheduled run already holding the production lock.
             try:
