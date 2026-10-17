@@ -51,11 +51,11 @@ class BridgeTests(unittest.TestCase):
             b.process(FakeAPI([self.job]), self.activated, path, self.clock, lambda j: calls.append(j))
             self.assertFalse(calls)
             self.assertEqual(b.read(path)['jobs']['request-1']['state'], 'needs_review')
-    def test_two_remote_generations_per_rolling_day(self):
+    def test_six_remote_generations_per_rolling_day(self):
         with TemporaryDirectory() as td, patch.object(b, 'DATA', Path(td)):
             path = Path(td) / 'state.json'
             records = {str(i): {'state': 'uploaded', 'action': 'generate_upload',
-                       'started_at': self.clock.isoformat()} for i in range(2)}
+                       'started_at': self.clock.isoformat()} for i in range(6)}
             b.write(path, {'jobs': records, 'dirty': False})
             calls = []
             b.process(FakeAPI([self.job]), self.activated, path, self.clock, lambda j: calls.append(j))
