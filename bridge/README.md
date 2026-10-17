@@ -56,7 +56,7 @@ with the same OpenAI, footage and YouTube configuration. It requires publish/pub
 No production program is automatically updated from GitHub. Updates still require
 local installation. Only format selection is supported, not arbitrary topic prompts.
 
-The bridge allows at most two remote generation attempts per rolling 24 hours,
+The bridge allows at most six remote generation attempts per rolling 24 hours,
 in addition to scheduled runs. All runs share the existing monthly attempt cap.
 Each request is claimed durably before work; interrupted or ambiguous uploads are
 never retried automatically. `needs_review` requires local logs and YouTube Studio
