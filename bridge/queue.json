@@ -20,6 +20,13 @@
       "format": "community",
       "created_at": "2026-10-17T10:15:21+00:00",
       "expires_at": "2026-10-17T11:15:21+00:00"
+    },
+    {
+      "id": "community-20261017-103648",
+      "action": "generate_upload",
+      "format": "community",
+      "created_at": "2026-10-17T10:36:48+00:00",
+      "expires_at": "2026-10-17T11:36:48+00:00"
     }
   ]
 }
