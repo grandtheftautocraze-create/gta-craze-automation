@@ -31,14 +31,18 @@ def add_deno_to_path():
             return
 
 
-def discover(root, config):
+def discover(root, config, topic=None):
     from automation import youtube, write
     api = youtube()
     sources = config.setdefault('sources', [])
     known = {s.get('video_id') for s in sources}
-    query = (config.get('queries') or ['GTA 5 gameplay no commentary'])[0]
+    queries = config.get('queries') or ['GTA 5 gameplay no commentary', 'GTA 5 police chase gameplay', 'GTA 5 driving gameplay']
+    cursor = int(config.get('search_cursor', 0))
+    query = (str(topic)[:160] + ' gameplay no commentary') if topic else queries[cursor % len(queries)]
+    config['search_cursor'] = cursor + 1
+    write(root / 'footage-sources.json', config)
     results = api.search().list(part='id,snippet', q=query, type='video', videoLicense='creativeCommon',
-                                videoDuration='medium', order='relevance', maxResults=50).execute().get('items', [])
+                                videoDuration='medium', order='relevance' if topic else 'date', maxResults=25).execute().get('items', [])
     ids = [item.get('id', {}).get('videoId') for item in results]
     ids = [i for i in ids if i and i not in known]
     for offset in range(0, len(ids), 50):
@@ -48,6 +52,11 @@ def discover(root, config):
             if video.get('status', {}).get('license') != 'creativeCommon':
                 continue
             if not re.search(r'\b(gta|grand theft auto)\b', title, re.I):
+                continue
+            if video.get('snippet', {}).get('liveBroadcastContent', 'none') != 'none':
+                continue
+            # Exclude commentary/tutorial thumbnails and obvious unrelated uploads.
+            if re.search(r'\b(reaction|review|trailer|leak|explained|news)\b', title, re.I):
                 continue
             vid = video['id']
             item = {'video_id': vid, 'enabled': True, 'permission_confirmed': True,
@@ -59,10 +68,11 @@ def discover(root, config):
             write(root / 'footage-sources.json', config)
             print('Auto-selected Creative Commons source:', item['credit'], flush=True)
             return item
-    raise ValueError('No new GTA Creative Commons videos found. No paid generation or upload was attempted.')
+    print('No new eligible source found for this query; using verified cached footage.', flush=True)
+    return None
 
 
-def sync(root):
+def sync(root, topic=None):
     from yt_dlp import YoutubeDL
     from automation import read, write, duration
     add_deno_to_path()
@@ -73,9 +83,19 @@ def sync(root):
     usage_path = root / 'data' / 'clip-usage.json'
     usage = read(usage_path) if usage_path.exists() else {}
     if config.get('auto_discover'):
-        known_catalog = [entry for entry in catalog if entry.get('auto_source')]
-        if not known_catalog or all(usage.get(entry['file'], 0) > 0 for entry in known_catalog):
-            discover(root, config)
+        # One fresh topic search for every production job; bootstrap two sources.
+        active = [s for s in config.get('sources', []) if s.get('enabled')]
+        if topic or len(active) < 2:
+            discover(root, config, topic)
+            if len([s for s in config.get('sources', []) if s.get('enabled')]) < 2:
+                discover(root, config)
+        # Limit revalidation/transcoding work, retain cached files for old jobs.
+        enabled = [s for s in config.get('sources', []) if s.get('enabled')]
+        for old in enabled[:-6]:
+            old['enabled'] = False
+        write(sources_path, config)
+        active_ids = {s['video_id'] for s in config.get('sources', []) if s.get('enabled')}
+        catalog = [e for e in catalog if not e.get('auto_source') or e['auto_source'] in active_ids]
     for source in config.get('sources', []):
         if source.get('enabled') is not True:
             continue
@@ -127,7 +147,7 @@ def sync(root):
                 pending = folder / f'clip-{position:04d}.pending.mp4'
                 subprocess.run(['ffmpeg', '-nostdin', '-y', '-v', 'error', '-ss', str(position), '-i', str(original), '-t', '60',
                     '-map', '0:v:0', '-an', '-c:v', 'libx264', '-preset', 'fast', '-crf', '23', '-pix_fmt', 'yuv420p',
-                    '-movflags', '+faststart', str(pending)], stdin=subprocess.DEVNULL, check=True, timeout=600)
+                    '-movflags', '+faststart', str(pending)], check=True, timeout=600)
                 if duration(pending) < 59:
                     raise ValueError('Downloaded excerpt is incomplete')
                 pending.replace(target)
