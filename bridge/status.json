@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "checked_at": "2026-10-17T10:01:12.093478+00:00",
+  "checked_at": "2026-10-17T10:15:43.637770+00:00",
   "connection": "verified",
   "jobs": [
     {
@@ -17,6 +17,12 @@
       "started_at": "2026-10-17T09:59:42.433482+00:00",
       "video_url": "https://www.youtube.com/watch?v=f9yFwBNVjgo",
       "finished_at": "2026-10-17T10:01:11.553306+00:00"
+    },
+    {
+      "id": "community-20261017-101521",
+      "state": "started",
+      "action": "generate_upload",
+      "started_at": "2026-10-17T10:15:42.501328+00:00"
     }
   ]
 }
