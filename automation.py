@@ -324,13 +324,17 @@ def render(jobdir, clip, script):
         raise ValueError(f'Voice duration {seconds:.1f}s outside 20-60s; hold for revision.')
     style = script.get('format', 'explainer')
     (jobdir / 'captions.ass').write_text(captions(read(jobdir / 'word-timings.json'), seconds, style), encoding='utf-8')
+    from montage import build
+    shots = build(ROOT, jobdir, media_entries(), seconds)
+    script['credit'] = '\n'.join(dict.fromkeys(shot['clip']['credit'] + ' — ' + shot['clip']['permission_reference'] for shot in shots))
+    write(jobdir / 'script.json', script)
     # Fill the portrait canvas without stretching; horizontal footage loses edges.
     video_filter = (
         "[0:v]fps=30,scale=1080:1920:force_original_aspect_ratio=increase,"
         "crop=1080:1920,setsar=1,eq=contrast=1.04:saturation=1.08,"
         "ass=captions.ass,format=yuv420p[v]"
     )
-    subprocess.run(['ffmpeg', '-nostdin', '-y', '-v', 'error', '-stream_loop', '-1', '-i', str((ROOT / clip['file']).resolve()),
+    subprocess.run(['ffmpeg', '-nostdin', '-y', '-v', 'error', '-i', 'montage.mp4',
                     '-i', 'voice.wav', '-t', str(seconds), '-filter_complex', video_filter,
                     '-map', '[v]', '-map', '1:a:0',
                     '-af', 'highpass=f=90,lowpass=f=12000,acompressor=threshold=0.12:ratio=2.5:attack=12:release=100:makeup=2,loudnorm=I=-16:TP=-1.5:LRA=11', '-c:v', 'libx264', '-preset', 'fast',
